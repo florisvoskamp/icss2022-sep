@@ -22,12 +22,93 @@ public class ASTListener extends ICSSBaseListener {
 	//Use this to keep track of the parent nodes when recursively traversing the ast
 	private IHANStack<ASTNode> currentContainer;
 
+	private IHANStack<Expression> expressionStack;
+
 	public ASTListener() {
 		ast = new AST();
 		currentContainer = new HANStack<>();
+		expressionStack = new HANStack<>();
 	}
-    public AST getAST() {
-        return ast;
-    }
-    
+
+	@Override
+	public void enterStylesheet(ICSSParser.StylesheetContext ctx) {
+		currentContainer.push(ast.root);
+	}
+
+	@Override
+	public void exitStylesheet(ICSSParser.StylesheetContext ctx) {
+		currentContainer.pop();
+	}
+
+	@Override
+	public void enterStylerule(ICSSParser.StyleruleContext ctx) {
+		Stylerule rule = new Stylerule();
+		currentContainer.peek().addChild(rule);
+		currentContainer.push(rule);
+	}
+
+	@Override
+	public void exitStylerule(ICSSParser.StyleruleContext ctx) {
+		currentContainer.pop();
+	}
+
+	@Override
+	public void exitTagSelector(ICSSParser.TagSelectorContext ctx) {
+		TagSelector selector = new TagSelector(ctx.getText());
+		currentContainer.peek().addChild(selector);
+	}
+
+	@Override
+	public void exitIdSelector(ICSSParser.IdSelectorContext ctx) {
+		IdSelector selector = new IdSelector(ctx.getText());
+		currentContainer.peek().addChild(selector);
+	}
+
+	@Override
+	public void exitClassSelector(ICSSParser.ClassSelectorContext ctx) {
+		ClassSelector selector = new ClassSelector(ctx.getText());
+		currentContainer.peek().addChild(selector);
+	}
+
+	@Override
+	public void enterDeclaration(ICSSParser.DeclarationContext ctx) {
+		Declaration declaration = new Declaration();
+		currentContainer.peek().addChild(declaration);
+		currentContainer.push(declaration);
+	}
+
+	@Override
+	public void exitPropertyName(ICSSParser.PropertyNameContext ctx) {
+		PropertyName propertyName = new PropertyName(ctx.getText());
+		currentContainer.peek().addChild(propertyName);
+	}
+
+	@Override
+	public void exitLiteral(ICSSParser.LiteralContext ctx) {
+		if (ctx.COLOR() != null) {
+			expressionStack.push(new ColorLiteral(ctx.COLOR().getText()));
+		} else if (ctx.PIXELSIZE() != null) {
+			expressionStack.push(new PixelLiteral(ctx.PIXELSIZE().getText()));
+		} else if (ctx.PERCENTAGE() != null) {
+			expressionStack.push(new PercentageLiteral(ctx.PERCENTAGE().getText()));
+		} else if (ctx.SCALAR() != null) {
+			expressionStack.push(new ScalarLiteral(ctx.SCALAR().getText()));
+		} else if (ctx.TRUE() != null) {
+			expressionStack.push(new BoolLiteral(true));
+		} else if (ctx.FALSE() != null) {
+			expressionStack.push(new BoolLiteral(false));
+		}
+	}
+
+	@Override
+	public void exitDeclaration(ICSSParser.DeclarationContext ctx) {
+		Expression expression = expressionStack.pop();
+		currentContainer.peek().addChild(expression);
+		currentContainer.pop();
+	}
+
+	public AST getAST() {
+		return ast;
+	}
+
 }
