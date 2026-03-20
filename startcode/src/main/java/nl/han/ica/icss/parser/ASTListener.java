@@ -78,6 +78,27 @@ public class ASTListener extends ICSSBaseListener {
 	}
 
 	@Override
+	public void enterVariableAssignment(ICSSParser.VariableAssignmentContext ctx) {
+		VariableAssignment assignment = new VariableAssignment();
+		currentContainer.peek().addChild(assignment);
+		currentContainer.push(assignment);
+	}
+
+	@Override
+	public void exitVariableAssignment(ICSSParser.VariableAssignmentContext ctx) {
+		String name = ctx.CAPITAL_IDENT().getText();
+		currentContainer.peek().addChild(new VariableReference(name));
+		Expression expression = expressionStack.pop();
+		currentContainer.peek().addChild(expression);
+		currentContainer.pop();
+	}
+
+	@Override
+	public void exitVariableReference(ICSSParser.VariableReferenceContext ctx) {
+		expressionStack.push(new VariableReference(ctx.getText()));
+	}
+
+	@Override
 	public void exitPropertyName(ICSSParser.PropertyNameContext ctx) {
 		PropertyName propertyName = new PropertyName(ctx.getText());
 		currentContainer.peek().addChild(propertyName);
