@@ -122,6 +122,48 @@ public class ASTListener extends ICSSBaseListener {
 	}
 
 	@Override
+	public void exitMult(ICSSParser.MultContext ctx) {
+		int count = ctx.primary().size();
+		Expression[] operands = new Expression[count];
+		for (int i = count - 1; i >= 0; i--) {
+			operands[i] = expressionStack.pop();
+		}
+		Expression result = operands[0];
+		for (int i = 1; i < count; i++) {
+			MultiplyOperation operation = new MultiplyOperation();
+			operation.addChild(result);
+			operation.addChild(operands[i]);
+			result = operation;
+		}
+		expressionStack.push(result);
+	}
+
+	@Override
+	public void exitPlusminus(ICSSParser.PlusminusContext ctx) {
+		int count = ctx.mult().size();
+		Expression[] operands = new Expression[count];
+		for (int i = count - 1; i >= 0; i--) {
+			operands[i] = expressionStack.pop();
+		}
+		Expression result = operands[0];
+		for (int i = 1; i < count; i++) {
+			String operator = ctx.getChild(2 * i - 1).getText();
+			if (operator.equals("+")) {
+				AddOperation operation = new AddOperation();
+				operation.addChild(result);
+				operation.addChild(operands[i]);
+				result = operation;
+			} else {
+				SubtractOperation operation = new SubtractOperation();
+				operation.addChild(result);
+				operation.addChild(operands[i]);
+				result = operation;
+			}
+		}
+		expressionStack.push(result);
+	}
+
+	@Override
 	public void exitDeclaration(ICSSParser.DeclarationContext ctx) {
 		Expression expression = expressionStack.pop();
 		currentContainer.peek().addChild(expression);

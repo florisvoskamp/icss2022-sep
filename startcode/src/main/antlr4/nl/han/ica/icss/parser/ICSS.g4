@@ -65,7 +65,13 @@ variableAssignment: CAPITAL_IDENT ASSIGNMENT_OPERATOR expression SEMICOLON;
 
 variableReference: CAPITAL_IDENT;
 
-expression: literal | variableReference;
+expression: plusminus;
+
+plusminus: mult ((PLUS | MIN) mult)*;
+
+mult: primary (MUL primary)*;
+
+primary: literal | variableReference;
 
 literal: COLOR | PIXELSIZE | PERCENTAGE | SCALAR | TRUE | FALSE;
 
