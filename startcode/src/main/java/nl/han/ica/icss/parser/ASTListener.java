@@ -53,6 +53,36 @@ public class ASTListener extends ICSSBaseListener {
 	}
 
 	@Override
+	public void enterIfClause(ICSSParser.IfClauseContext ctx) {
+		IfClause clause = new IfClause();
+		currentContainer.peek().addChild(clause);
+		currentContainer.push(clause);
+	}
+
+	@Override
+	public void exitIfClause(ICSSParser.IfClauseContext ctx) {
+		currentContainer.pop();
+	}
+
+	@Override
+	public void exitIfHead(ICSSParser.IfHeadContext ctx) {
+		Expression conditional = expressionStack.pop();
+		currentContainer.peek().addChild(conditional);
+	}
+
+	@Override
+	public void enterElseClause(ICSSParser.ElseClauseContext ctx) {
+		ElseClause clause = new ElseClause();
+		currentContainer.peek().addChild(clause);
+		currentContainer.push(clause);
+	}
+
+	@Override
+	public void exitElseClause(ICSSParser.ElseClauseContext ctx) {
+		currentContainer.pop();
+	}
+
+	@Override
 	public void exitTagSelector(ICSSParser.TagSelectorContext ctx) {
 		TagSelector selector = new TagSelector(ctx.getText());
 		currentContainer.peek().addChild(selector);
