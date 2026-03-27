@@ -5,6 +5,8 @@ import nl.han.ica.datastructures.IHANStack;
 import nl.han.ica.icss.ast.*;
 import nl.han.ica.icss.ast.literals.*;
 import nl.han.ica.icss.ast.operations.AddOperation;
+import nl.han.ica.icss.ast.operations.MaxFunction;
+import nl.han.ica.icss.ast.operations.MinFunction;
 import nl.han.ica.icss.ast.operations.MultiplyOperation;
 import nl.han.ica.icss.ast.operations.SubtractOperation;
 import nl.han.ica.icss.ast.selectors.ClassSelector;
@@ -132,6 +134,21 @@ public class ASTListener extends ICSSBaseListener {
 	public void exitPropertyName(ICSSParser.PropertyNameContext ctx) {
 		PropertyName propertyName = new PropertyName(ctx.getText());
 		currentContainer.peek().addChild(propertyName);
+	}
+
+	@Override
+	public void exitBuiltinCall(ICSSParser.BuiltinCallContext ctx) {
+		Expression right = expressionStack.pop();
+		Expression left = expressionStack.pop();
+		Operation op;
+		if (ctx.MIN_KW() != null) {
+			op = new MinFunction();
+		} else {
+			op = new MaxFunction();
+		}
+		op.addChild(left);
+		op.addChild(right);
+		expressionStack.push(op);
 	}
 
 	@Override

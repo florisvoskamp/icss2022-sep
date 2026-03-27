@@ -24,6 +24,12 @@ COLOR: '#' [0-9a-f] [0-9a-f] [0-9a-f] [0-9a-f] [0-9a-f] [0-9a-f];
 ID_IDENT: '#' [a-z0-9\-]+;
 CLASS_IDENT: '.' [a-z0-9\-]+;
 
+MIN_KW: 'min';
+MAX_KW: 'max';
+LPAREN: '(';
+RPAREN: ')';
+COMMA: ',';
+
 //General identifiers
 LOWER_IDENT: [a-z] [a-z0-9\-]*;
 CAPITAL_IDENT: [A-Z] [A-Za-z0-9_]*;
@@ -79,7 +85,12 @@ plusminus: mult ((PLUS | MIN) mult)*;
 
 mult: primary (MUL primary)*;
 
-primary: literal | variableReference;
+primary: literal | variableReference | builtinCall;
+
+builtinCall
+    : MIN_KW LPAREN expression COMMA expression RPAREN
+    | MAX_KW LPAREN expression COMMA expression RPAREN
+    ;
 
 literal: COLOR | PIXELSIZE | PERCENTAGE | SCALAR | TRUE | FALSE;
 
