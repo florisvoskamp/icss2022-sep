@@ -21,6 +21,8 @@ import nl.han.ica.icss.ast.literals.PercentageLiteral;
 import nl.han.ica.icss.ast.literals.PixelLiteral;
 import nl.han.ica.icss.ast.literals.ScalarLiteral;
 import nl.han.ica.icss.ast.operations.AddOperation;
+import nl.han.ica.icss.ast.operations.MaxFunction;
+import nl.han.ica.icss.ast.operations.MinFunction;
 import nl.han.ica.icss.ast.operations.MultiplyOperation;
 import nl.han.ica.icss.ast.operations.SubtractOperation;
 import nl.han.ica.icss.ast.types.ExpressionType;
@@ -107,7 +109,16 @@ public class Checker {
 
     private void checkVariableAssignment(VariableAssignment assignment) {
         ExpressionType type = checkExpression(assignment.expression);
-        variableTypes.getFirst().put(assignment.name.name, type);
+        HashMap<String, ExpressionType> scope = variableTypes.getFirst();
+        String name = assignment.name.name;
+        if (scope.containsKey(name)) {
+            ExpressionType previous = scope.get(name);
+            if (previous != type) {
+                assignment.setError("variable cannot change type");
+                return;
+            }
+        }
+        scope.put(name, type);
     }
 
     private void checkDeclaration(Declaration declaration) {
@@ -140,7 +151,32 @@ public class Checker {
         if (expression instanceof SubtractOperation) {
             return checkAddSubtract((SubtractOperation) expression);
         }
+        if (expression instanceof MinFunction || expression instanceof MaxFunction) {
+            return checkMinMax((Operation) expression);
+        }
         return ExpressionType.UNDEFINED;
+    }
+
+    private ExpressionType checkMinMax(Operation op) {
+        ExpressionType left = checkExpression(op.lhs);
+        ExpressionType right = checkExpression(op.rhs);
+        if (left == ExpressionType.COLOR || right == ExpressionType.COLOR) {
+            op.setError("color not allowed in min or max");
+            return ExpressionType.UNDEFINED;
+        }
+        if (left == ExpressionType.BOOL || right == ExpressionType.BOOL) {
+            op.setError("invalid operands for min or max");
+            return ExpressionType.UNDEFINED;
+        }
+        if (left != right) {
+            op.setError("min and max operands must have the same type");
+            return ExpressionType.UNDEFINED;
+        }
+        if (left != ExpressionType.PIXEL && left != ExpressionType.PERCENTAGE && left != ExpressionType.SCALAR) {
+            op.setError("min and max expect pixel, percentage, or scalar");
+            return ExpressionType.UNDEFINED;
+        }
+        return left;
     }
 
     private ExpressionType checkVariableReference(VariableReference reference) {
