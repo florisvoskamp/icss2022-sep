@@ -16,7 +16,10 @@ import nl.han.ica.icss.ast.literals.BoolLiteral;
 import nl.han.ica.icss.ast.literals.PercentageLiteral;
 import nl.han.ica.icss.ast.literals.PixelLiteral;
 import nl.han.ica.icss.ast.literals.ScalarLiteral;
+import nl.han.ica.icss.ast.Operation;
 import nl.han.ica.icss.ast.operations.AddOperation;
+import nl.han.ica.icss.ast.operations.MaxFunction;
+import nl.han.ica.icss.ast.operations.MinFunction;
 import nl.han.ica.icss.ast.operations.MultiplyOperation;
 import nl.han.ica.icss.ast.operations.SubtractOperation;
 
@@ -117,6 +120,36 @@ public class Evaluator implements Transform {
             Literal left = evalExpression(op.lhs);
             Literal right = evalExpression(op.rhs);
             return subtract(left, right);
+        }
+        if (expression instanceof MinFunction) {
+            return evalMinMax((Operation) expression, true);
+        }
+        if (expression instanceof MaxFunction) {
+            return evalMinMax((Operation) expression, false);
+        }
+        return null;
+    }
+
+    private Literal evalMinMax(Operation op, boolean isMin) {
+        Literal left = evalExpression(op.lhs);
+        Literal right = evalExpression(op.rhs);
+        if (left instanceof PixelLiteral && right instanceof PixelLiteral) {
+            int a = ((PixelLiteral) left).value;
+            int b = ((PixelLiteral) right).value;
+            int v = isMin ? Math.min(a, b) : Math.max(a, b);
+            return new PixelLiteral(v);
+        }
+        if (left instanceof PercentageLiteral && right instanceof PercentageLiteral) {
+            int a = ((PercentageLiteral) left).value;
+            int b = ((PercentageLiteral) right).value;
+            int v = isMin ? Math.min(a, b) : Math.max(a, b);
+            return new PercentageLiteral(v + "%");
+        }
+        if (left instanceof ScalarLiteral && right instanceof ScalarLiteral) {
+            int a = ((ScalarLiteral) left).value;
+            int b = ((ScalarLiteral) right).value;
+            int v = isMin ? Math.min(a, b) : Math.max(a, b);
+            return new ScalarLiteral(v);
         }
         return null;
     }
